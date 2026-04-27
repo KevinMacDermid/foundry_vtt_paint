@@ -1,6 +1,8 @@
 import { PaintCanvasLayer } from "./paint-canvas-layer.mjs";
-import { PaintControls } from "./paint-controls.mjs";
-import { COLORS } from "./paint-controls.mjs";
+import { PaintControls, COLORS } from "./paint-controls.mjs";
+import { EraserPanel } from "./eraser-panel.mjs";
+
+const eraserPanel = new EraserPanel();
 
 Hooks.once("init", () => {
   console.log("Foundry Paint | Initializing");
@@ -33,6 +35,15 @@ Hooks.once("init", () => {
     default: "#000000",
   });
 
+  game.settings.register("foundry-paint", "eraserSize", {
+    name: "Eraser Size",
+    hint: "Size of the eraser in bitmap pixels.",
+    scope: "client",
+    config: false,
+    type: Number,
+    default: 1,
+  });
+
   game.settings.register("foundry-paint", "opacity", {
     name: "Paint Opacity",
     hint: "Opacity of the paint layer (0.0 to 1.0).",
@@ -61,12 +72,21 @@ Hooks.on("canvasReady", () => {
   canvas.paint?.initBitmap();
 });
 
-// Update cursor and color buttons when control group or tool changes
+// Update cursor, color buttons, and eraser panel when control/tool changes
 Hooks.on("renderSceneControls", () => {
   canvas.paint?._updateCursor();
   PaintControls.updateColorButtons();
+  _syncEraserPanel();
 });
 Hooks.on("activateSceneControls", () => {
   canvas.paint?._updateCursor();
   PaintControls.updateColorButtons();
+  _syncEraserPanel();
 });
+
+function _syncEraserPanel() {
+  const isErasing = ui.controls?.control?.name === "foundry-paint"
+    && ui.controls?.activeTool === "paint-erase";
+  if (isErasing) eraserPanel.show();
+  else eraserPanel.hide();
+}

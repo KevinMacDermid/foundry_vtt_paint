@@ -28,6 +28,10 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
     this._lastPx = null;
     /** @type {number|null} last painted bitmap y coordinate, for interpolation */
     this._lastPy = null;
+    /** @type {PIXI.Graphics|null} eraser footprint cursor */
+    this._eraserCursor = null;
+    /** Bound pointermove handler for eraser cursor */
+    this._onStageMoveHandler = this._onStageMove.bind(this);
   }
 
   /** @override */
@@ -181,17 +185,78 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
     this.interactive = true;
     this.interactiveChildren = true;
     this._updateCursor();
+    canvas.stage.on("pointermove", this._onStageMoveHandler);
   }
 
   /** @override */
   _deactivate() {
     super._deactivate();
     document.body.classList.remove("foundry-paint-draw", "foundry-paint-erase");
+    canvas.stage.off("pointermove", this._onStageMoveHandler);
+    this._eraserCursor?.clear();
   }
 
   _updateCursor() {
     document.body.classList.toggle("foundry-paint-draw", this.isDrawing);
     document.body.classList.toggle("foundry-paint-erase", this.isErasing);
+    if (!this.isErasing) this._eraserCursor?.clear();
+  }
+
+  // ── Eraser cursor ────────────────────────────────────────────────
+
+  /** Ensure the eraser cursor Graphics object exists in this layer. */
+  _ensureEraserCursor() {
+    if (!this._eraserCursor || this._eraserCursor.destroyed) {
+      this._eraserCursor = new PIXI.Graphics();
+      this.addChild(this._eraserCursor);
+    }
+    return this._eraserCursor;
+  }
+
+  /** Called on canvas.stage pointermove — update eraser footprint. */
+  _onStageMove(event) {
+    if (!this.isErasing) return;
+    const pos = event.getLocalPosition(canvas.stage);
+    this._drawEraserCursor(pos.x, pos.y);
+  }
+
+  /** Draw (or update) the eraser footprint rectangle at scene position (sx, sy). */
+  _drawEraserCursor(sx, sy) {
+    const scene = canvas.scene;
+    const dims = scene.dimensions;
+    const sceneX = dims?.sceneX ?? 0;
+    const sceneY = dims?.sceneY ?? 0;
+    const size = game.settings.get("foundry-paint", "eraserSize");
+
+    // Snap to bitmap pixel grid
+    const px = Math.floor((sx - sceneX) / this.pixelSize);
+    const py = Math.floor((sy - sceneY) / this.pixelSize);
+    const half = Math.floor(size / 2);
+    const bx = px - half;
+    const by = py - half;
+
+    // Convert back to scene coords for drawing
+    const rx = sceneX + bx * this.pixelSize;
+    const ry = sceneY + by * this.pixelSize;
+    const rw = size * this.pixelSize;
+    const rh = size * this.pixelSize;
+
+    const g = this._ensureEraserCursor();
+    g.clear();
+    // White fill with dark outline — MSPaint style
+    g.beginFill(0xffffff, 0.35);
+    g.lineStyle(1, 0x000000, 0.8);
+    g.drawRect(rx, ry, rw, rh);
+    g.endFill();
+    // Inner white border for visibility on dark backgrounds
+    g.lineStyle(1, 0xffffff, 0.8);
+    g.drawRect(rx + 1, ry + 1, rw - 2, rh - 2);
+  }
+
+  /** Force a cursor redraw at the last known mouse position (e.g. after size change). */
+  _updateEraserCursor() {
+    // Redrawn on next pointermove — just clear for now
+    this._eraserCursor?.clear();
   }
 
   // ── Mouse event handlers ─────────────────────────────────────────
@@ -277,8 +342,10 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
         this._ctx.fillRect(bx, by, 1, 1);
       }
     } else if (this.isErasing) {
+      const size = game.settings.get("foundry-paint", "eraserSize");
+      const half = Math.floor(size / 2);
       for (const [bx, by] of this._bresenham(x0, y0, px, py)) {
-        this._ctx.clearRect(bx, by, 1, 1);
+        this._ctx.clearRect(bx - half, by - half, size, size);
       }
     }
 
