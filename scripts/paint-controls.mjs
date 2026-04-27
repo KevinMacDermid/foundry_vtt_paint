@@ -1,9 +1,10 @@
 /**
  * PaintControls — adds Draw / Erase / Clear buttons to Foundry's scene controls.
- * Foundry v13 uses object-keyed controls and tools, not arrays.
+ * We wire up click handlers directly on rendered DOM elements since our
+ * control group has no canvas layer for Foundry's built-in tool switching.
  */
 export class PaintControls {
-  static _activeTool = null;
+  static activeTool = null;
 
   static addControls(controls) {
     controls["foundry-paint"] = {
@@ -35,6 +36,63 @@ export class PaintControls {
       },
       activeTool: "paint-draw"
     };
+  }
+
+  /** Called from renderSceneControls hook. */
+  static onRender(app) {
+    if (app.control?.name !== "foundry-paint") {
+      PaintControls.activeTool = null;
+      canvas.paint?.deactivate();
+      return;
+    }
+
+    // Wire click handlers on the tool buttons after render
+    requestAnimationFrame(() => {
+      const drawBtn = document.querySelector('[data-tool="paint-draw"]');
+      const eraseBtn = document.querySelector('[data-tool="paint-erase"]');
+
+      drawBtn?.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        PaintControls._setTool("draw");
+      }, { capture: true });
+
+      eraseBtn?.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        PaintControls._setTool("erase");
+      }, { capture: true });
+
+      PaintControls._updateButtons();
+
+      // If no tool selected yet, default to draw
+      if (!PaintControls.activeTool) {
+        PaintControls._setTool("draw");
+      } else {
+        canvas.paint?.activate(PaintControls.activeTool);
+      }
+    });
+  }
+
+  static _setTool(tool) {
+    if (!canvas.paint) return;
+
+    if (PaintControls.activeTool === tool) {
+      // Toggle off
+      PaintControls.activeTool = null;
+      canvas.paint.deactivate();
+    } else {
+      PaintControls.activeTool = tool;
+      canvas.paint.activate(tool);
+    }
+    PaintControls._updateButtons();
+  }
+
+  static _updateButtons() {
+    const drawBtn = document.querySelector('[data-tool="paint-draw"]');
+    const eraseBtn = document.querySelector('[data-tool="paint-erase"]');
+    drawBtn?.classList.toggle("active", PaintControls.activeTool === "draw");
+    eraseBtn?.classList.toggle("active", PaintControls.activeTool === "erase");
   }
 
   static async _clearAll() {

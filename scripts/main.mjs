@@ -59,17 +59,7 @@ Hooks.on("getSceneControlButtons", (controls) => {
   PaintControls.addControls(controls);
 });
 
-// Watch for tool/control changes to activate/deactivate painting
+// Deactivate painting when switching away from paint controls
 Hooks.on("renderSceneControls", (app) => {
-  const control = app.control;
-  if (control?.name === "foundry-paint") {
-    const tool = control.activeTool;
-    if (tool === "paint-draw") {
-      canvas.paint?.activate("draw");
-    } else if (tool === "paint-erase") {
-      canvas.paint?.activate("erase");
-    }
-  } else {
-    canvas.paint?.deactivate();
-  }
+  PaintControls.onRender(app);
 });

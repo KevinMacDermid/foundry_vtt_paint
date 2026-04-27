@@ -9,14 +9,15 @@
   cursor: cell !important;
 }
 
-/* Transparent overlay that captures mouse events while painting */
+/* Transparent overlay that captures mouse events while painting.
+   Sits behind Foundry's UI (z-index < 100) but above the canvas. */
 .foundry-paint-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: 50;
+  z-index: 1;
   display: none;
 }
 
