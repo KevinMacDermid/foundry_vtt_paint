@@ -1,10 +1,15 @@
-import { PaintLayer } from "./paint-layer.mjs";
+import { PaintCanvasLayer } from "./paint-canvas-layer.mjs";
 import { PaintControls } from "./paint-controls.mjs";
 
 Hooks.once("init", () => {
   console.log("Foundry Paint | Initializing");
 
-  // Register settings
+  // Register canvas layer early so it's available when the canvas draws
+  CONFIG.Canvas.layers[PaintCanvasLayer.LAYER_NAME] = {
+    layerClass: PaintCanvasLayer,
+    group: "interface",
+  };
+
   game.settings.register("foundry-paint", "pixelSize", {
     name: "Pixel Size",
     hint: "Size of each paint pixel in scene units. Smaller = higher resolution.",
@@ -15,7 +20,7 @@ Hooks.once("init", () => {
     range: { min: 5, max: 100, step: 5 },
     onChange: () => {
       if (canvas.paint) canvas.paint.rebuild();
-    }
+    },
   });
 
   game.settings.register("foundry-paint", "brushColor", {
@@ -24,7 +29,7 @@ Hooks.once("init", () => {
     scope: "client",
     config: true,
     type: String,
-    default: "#ff0000"
+    default: "#ff0000",
   });
 
   game.settings.register("foundry-paint", "opacity", {
@@ -36,8 +41,8 @@ Hooks.once("init", () => {
     default: 0.7,
     range: { min: 0.1, max: 1.0, step: 0.1 },
     onChange: (value) => {
-      if (canvas.paint) canvas.paint.container.alpha = value;
-    }
+      if (canvas.paint?._sprite) canvas.paint._sprite.alpha = value;
+    },
   });
 });
 
@@ -45,21 +50,17 @@ Hooks.once("ready", () => {
   console.log("Foundry Paint | Module ready");
 });
 
-// Add paint layer to the canvas
-Hooks.on("canvasInit", (canvas) => {
-  canvas.paint = new PaintLayer();
-});
-
-Hooks.on("canvasReady", (canvas) => {
-  canvas.paint.init();
-});
-
-// Add scene control buttons
+// Register scene controls (also registers the canvas layer)
 Hooks.on("getSceneControlButtons", (controls) => {
   PaintControls.addControls(controls);
 });
 
-// Deactivate painting when switching away from paint controls
-Hooks.on("renderSceneControls", (app) => {
-  PaintControls.onRender(app);
+// Initialize the bitmap when the canvas is ready
+Hooks.on("canvasReady", () => {
+  canvas.paint?.initBitmap();
+});
+
+// Update cursor when tool changes
+Hooks.on("renderSceneControls", () => {
+  canvas.paint?._updateCursor();
 });
