@@ -60,7 +60,10 @@ Hooks.on("canvasReady", () => {
   canvas.paint?.initBitmap();
 });
 
-// Update cursor when tool changes
+// Update cursor when control group or tool changes
 Hooks.on("renderSceneControls", () => {
+  canvas.paint?._updateCursor();
+});
+Hooks.on("activateSceneControls", () => {
   canvas.paint?._updateCursor();
 });

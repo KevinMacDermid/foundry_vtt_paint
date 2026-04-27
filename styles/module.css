@@ -1,8 +1,11 @@
 /* Custom cursors when paint tools are active */
+
+/* Pencil cursor for draw mode - 16x16, hotspot at tip (1,15) */
 .foundry-paint-draw #board {
-  cursor: crosshair !important;
+  cursor: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path d="M12.1 1.3a1.5 1.5 0 0 1 2.1 0l.5.5a1.5 1.5 0 0 1 0 2.1L5.5 13.1 1.5 14.5l1.4-4z" fill="%23333" stroke="%23fff" stroke-width="0.5"/><path d="M11.5 2l2.5 2.5" stroke="%23fff" stroke-width="0.5"/></svg>') 1 15, crosshair !important;
 }
 
+/* Eraser cursor for erase mode - 16x16, hotspot at bottom-left (2,14) */
 .foundry-paint-erase #board {
-  cursor: not-allowed !important;
+  cursor: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><rect x="2" y="4" width="12" height="9" rx="1.5" transform="rotate(-30 8 8)" fill="%23e8e8e8" stroke="%23333" stroke-width="0.8"/><rect x="2" y="4" width="12" height="4.5" rx="1" transform="rotate(-30 8 8)" fill="%23f28b82" stroke="%23333" stroke-width="0.8"/></svg>') 2 14, crosshair !important;
 }
