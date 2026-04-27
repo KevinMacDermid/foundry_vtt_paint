@@ -9,3 +9,21 @@
 .foundry-paint-erase #board {
   cursor: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><rect x="2" y="4" width="12" height="9" rx="1.5" transform="rotate(-30 8 8)" fill="%23e8e8e8" stroke="%23333" stroke-width="0.8"/><rect x="2" y="4" width="12" height="4.5" rx="1" transform="rotate(-30 8 8)" fill="%23f28b82" stroke="%23333" stroke-width="0.8"/></svg>') 2 14, crosshair !important;
 }
+
+/* ── Color swatch buttons ───────────────────────────────────────── */
+
+/* Color swatch buttons — the button itself is the FA icon element */
+[data-tool="color-black"]  { color: #000000 !important; text-shadow: 0 0 2px #aaa; }
+[data-tool="color-white"]  { color: #ffffff !important; text-shadow: 0 0 2px #000; }
+[data-tool="color-red"]    { color: #e03030 !important; }
+[data-tool="color-orange"] { color: #e07820 !important; }
+[data-tool="color-yellow"] { color: #d4c800 !important; }
+[data-tool="color-green"]  { color: #30a030 !important; }
+[data-tool="color-blue"]   { color: #2060e0 !important; }
+[data-tool="color-purple"] { color: #9030c0 !important; }
+
+/* Active color: glow in the swatch colour */
+[data-tool^="color-"].active,
+[data-tool^="color-"][aria-pressed="true"] {
+  filter: drop-shadow(0 0 4px currentColor);
+}

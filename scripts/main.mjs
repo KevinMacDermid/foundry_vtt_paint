@@ -1,5 +1,6 @@
 import { PaintCanvasLayer } from "./paint-canvas-layer.mjs";
 import { PaintControls } from "./paint-controls.mjs";
+import { COLORS } from "./paint-controls.mjs";
 
 Hooks.once("init", () => {
   console.log("Foundry Paint | Initializing");
@@ -16,7 +17,7 @@ Hooks.once("init", () => {
     scope: "world",
     config: true,
     type: Number,
-    default: 20,
+    default: 10,
     range: { min: 5, max: 100, step: 5 },
     onChange: () => {
       if (canvas.paint) canvas.paint.rebuild();
@@ -60,10 +61,12 @@ Hooks.on("canvasReady", () => {
   canvas.paint?.initBitmap();
 });
 
-// Update cursor when control group or tool changes
+// Update cursor and color buttons when control group or tool changes
 Hooks.on("renderSceneControls", () => {
   canvas.paint?._updateCursor();
+  PaintControls.updateColorButtons();
 });
 Hooks.on("activateSceneControls", () => {
   canvas.paint?._updateCursor();
+  PaintControls.updateColorButtons();
 });
