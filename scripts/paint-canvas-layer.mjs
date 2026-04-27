@@ -22,6 +22,8 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
     this.pixelSize = 20;
     /** @type {boolean} */
     this._isPainting = false;
+    /** @type {boolean} true once any saved bitmap is loaded (or no data to load) */
+    this._ready = true;
   }
 
   /** @override */
@@ -53,7 +55,13 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
 
   /** @override */
   async _draw(options) {
-    // Called when the canvas draws this layer
+    // Called by Foundry each time the canvas (re)draws this layer.
+    // We reset sprite state here so initBitmap() always starts clean.
+    this._sprite = null;
+    this._bitmap = null;
+    this._ctx = null;
+    this.gridW = 0;
+    this.gridH = 0;
   }
 
   /**
@@ -78,9 +86,10 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
     this._ctx.imageSmoothingEnabled = false;
 
     // Build the PIXI sprite
+    this._ready = true; // assume ready; _loadFromScene may set false temporarily
     this._buildSprite();
 
-    // Load saved data
+    // Load saved data (may set _ready=false until image loads)
     this._loadFromScene();
 
     console.log(`Foundry Paint | Bitmap ${this.gridW}×${this.gridH} (pixel size: ${this.pixelSize})`);
@@ -88,10 +97,11 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
 
   /** Rebuild after settings change. */
   rebuild() {
-    if (this._sprite) {
-      this._sprite.destroy({ children: true });
-      this._sprite = null;
-    }
+    this._sprite = null;
+    this._bitmap = null;
+    this._ctx = null;
+    this.gridW = 0;
+    this.gridH = 0;
     this.initBitmap();
   }
 
@@ -184,7 +194,7 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
 
   /** @override */
   _canDragLeftStart(user, event) {
-    return this.isDrawing || this.isErasing;
+    return this._ready && (this.isDrawing || this.isErasing);
   }
 
   /** @override */
@@ -215,7 +225,7 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
   /** @override */
   _onClickLeft(event) {
     // Single click — paint one pixel
-    if (this.isDrawing || this.isErasing) {
+    if (this._ready && (this.isDrawing || this.isErasing)) {
       this._paintAtEvent(event);
       this._refreshTexture();
       this._saveToScene();
@@ -283,11 +293,18 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
       return;
     }
 
+    // Block painting until the saved image has loaded, so async load
+    // can't clobber new strokes and there's no perceived lag.
+    this._ready = false;
     const img = new Image();
     img.onload = () => {
       this._ctx.drawImage(img, 0, 0);
+      this._ready = true;
       this._refreshTexture();
       console.log("Foundry Paint | Loaded from scene flags");
+    };
+    img.onerror = () => {
+      this._ready = true; // unblock even on error
     };
     img.src = dataUrl;
   }
