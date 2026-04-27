@@ -13,8 +13,19 @@ A painting/drawing tool module for Foundry VTT (v13). The module adds painting c
 - [x] Basic proof-of-life: floating "Paint" button that shows a notification on click
 - [x] Console log confirms module initialization
 
-### Phase 2: Start to make it do what we want
-- [ ] Define what the painting tool should actually do (TBD — needs discussion)
+### Phase 2: Bitmap paint with draw/erase ✅
+- [x] Low-res bitmap grid overlay (configurable pixel size, default 20 scene units)
+- [x] PIXI Sprite with nearest-neighbor scaling for chunky pixel look
+- [x] Draw tool (paints with configurable color)
+- [x] Erase tool (clears pixels)
+- [x] Clear All button (with confirmation dialog)
+- [x] Scene controls integration (palette icon group)
+- [x] HTML overlay to block canvas panning while painting
+- [x] Screen→scene coordinate transform for accurate painting
+- [x] Persistence: saves/loads paint data per-scene via flags (PNG data URL)
+- [x] Settings: pixel size, brush color, opacity
+
+### Phase 3: TBD
 - [ ] ...
 
 ## Technical Setup
@@ -28,4 +39,4 @@ A painting/drawing tool module for Foundry VTT (v13). The module adds painting c
 
 ## Current State
 
-Phase 1 complete. The module loads, shows a purple "Paint" button in the top-right corner of the game UI, and displays a notification when clicked. Ready to start building real functionality.
+Phase 2 complete. Bitmap painting works — draw and erase with chunky pixels on the Foundry canvas. Paint data persists per-scene. Controls are in the left sidebar under a palette icon.
