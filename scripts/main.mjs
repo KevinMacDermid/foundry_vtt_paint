@@ -30,7 +30,7 @@ Hooks.once("init", () => {
     scope: "client",
     config: true,
     type: String,
-    default: "#ff0000",
+    default: "#000000",
   });
 
   game.settings.register("foundry-paint", "opacity", {

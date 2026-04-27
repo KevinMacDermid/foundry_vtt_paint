@@ -24,6 +24,10 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
     this._isPainting = false;
     /** @type {boolean} true once any saved bitmap is loaded (or no data to load) */
     this._ready = true;
+    /** @type {number|null} last painted bitmap x coordinate, for interpolation */
+    this._lastPx = null;
+    /** @type {number|null} last painted bitmap y coordinate, for interpolation */
+    this._lastPy = null;
   }
 
   /** @override */
@@ -200,6 +204,8 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
   /** @override */
   _onDragLeftStart(event) {
     this._isPainting = true;
+    this._lastPx = null;
+    this._lastPy = null;
     this._paintAtEvent(event);
   }
 
@@ -213,6 +219,8 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
   _onDragLeftDrop(event) {
     if (!this._isPainting) return;
     this._isPainting = false;
+    this._lastPx = null;
+    this._lastPy = null;
     this._refreshTexture();
     this._saveToScene();
   }
@@ -220,6 +228,8 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
   /** @override */
   _onDragLeftCancel(event) {
     this._isPainting = false;
+    this._lastPx = null;
+    this._lastPy = null;
   }
 
   /** @override */
@@ -232,7 +242,7 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
     }
   }
 
-  /** Paint or erase at the event's scene position. */
+  /** Paint or erase at the event's scene position, interpolating from last position. */
   _paintAtEvent(event) {
     const scene = canvas.scene;
     const dims = scene.dimensions;
@@ -248,17 +258,48 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
     const px = Math.floor((pos.x - sceneX) / this.pixelSize);
     const py = Math.floor((pos.y - sceneY) / this.pixelSize);
 
-    if (px < 0 || px >= this.gridW || py < 0 || py >= this.gridH) return;
+    if (px < 0 || px >= this.gridW || py < 0 || py >= this.gridH) {
+      this._lastPx = null;
+      this._lastPy = null;
+      return;
+    }
+
+    // Interpolate from last position to current to fill gaps
+    const x0 = this._lastPx ?? px;
+    const y0 = this._lastPy ?? py;
+    this._lastPx = px;
+    this._lastPy = py;
 
     if (this.isDrawing) {
       const color = game.settings.get("foundry-paint", "brushColor");
       this._ctx.fillStyle = color;
-      this._ctx.fillRect(px, py, 1, 1);
+      for (const [bx, by] of this._bresenham(x0, y0, px, py)) {
+        this._ctx.fillRect(bx, by, 1, 1);
+      }
     } else if (this.isErasing) {
-      this._ctx.clearRect(px, py, 1, 1);
+      for (const [bx, by] of this._bresenham(x0, y0, px, py)) {
+        this._ctx.clearRect(bx, by, 1, 1);
+      }
     }
 
     this._scheduleRefresh();
+  }
+
+  /**
+   * Yields all [x, y] bitmap coordinates on the line from (x0,y0) to (x1,y1)
+   * using Bresenham's line algorithm.
+   */
+  *_bresenham(x0, y0, x1, y1) {
+    let dx = Math.abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+    let dy = -Math.abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+    let err = dx + dy;
+    while (true) {
+      yield [x0, y0];
+      if (x0 === x1 && y0 === y1) break;
+      const e2 = 2 * err;
+      if (e2 >= dy) { err += dy; x0 += sx; }
+      if (e2 <= dx) { err += dx; y0 += sy; }
+    }
   }
 
   // ── Persistence ──────────────────────────────────────────────────
