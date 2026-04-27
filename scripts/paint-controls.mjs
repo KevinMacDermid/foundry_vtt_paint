@@ -91,8 +91,12 @@ export class PaintControls {
   static _updateButtons() {
     const drawBtn = document.querySelector('[data-tool="paint-draw"]');
     const eraseBtn = document.querySelector('[data-tool="paint-erase"]');
-    drawBtn?.classList.toggle("active", PaintControls.activeTool === "draw");
-    eraseBtn?.classList.toggle("active", PaintControls.activeTool === "erase");
+    const drawActive = PaintControls.activeTool === "draw";
+    const eraseActive = PaintControls.activeTool === "erase";
+    drawBtn?.classList.toggle("active", drawActive);
+    eraseBtn?.classList.toggle("active", eraseActive);
+    drawBtn?.setAttribute("aria-pressed", drawActive ? "true" : "false");
+    eraseBtn?.setAttribute("aria-pressed", eraseActive ? "true" : "false");
   }
 
   static async _clearAll() {

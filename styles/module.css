@@ -1,16 +1,14 @@
 /* Custom cursors when paint tools are active */
-.foundry-paint-draw #board,
 .foundry-paint-draw .foundry-paint-overlay {
-  cursor: crosshair !important;
+  cursor: crosshair;
 }
 
-.foundry-paint-erase #board,
 .foundry-paint-erase .foundry-paint-overlay {
-  cursor: cell !important;
+  cursor: not-allowed;
 }
 
 /* Transparent overlay that captures mouse events while painting.
-   Sits behind Foundry's UI (z-index < 100) but above the canvas. */
+   Sits above the canvas (#board z-index: 0) but below all UI (z-index: 30). */
 .foundry-paint-overlay {
   position: fixed;
   top: 0;
