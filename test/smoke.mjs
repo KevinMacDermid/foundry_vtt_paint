@@ -44,20 +44,21 @@ async function run() {
   assert(page.url().includes("/game"), "Joined game successfully");
 
   // 2. Module logged to console
-  const initLog = consoleLogs.some((l) => l.includes("Foundry Paint | Module loaded successfully!"));
+  const initLog = consoleLogs.some((l) => l.includes("Foundry Paint | Initializing"));
   assert(initLog, "Module init console log present");
 
-  // 3. Paint button is visible
-  const btn = page.locator("#foundry-paint-btn");
+  // 3. Paint palette button is visible in scene controls
+  const btn = page.locator('[data-control="foundry-paint"]');
   const visible = await btn.isVisible().catch(() => false);
-  assert(visible, "Paint button is visible");
+  assert(visible, "Paint palette button is visible in scene controls");
 
-  // 4. Clicking the button shows a notification
+  // 4. Clicking the palette button activates the paint tools
   if (visible) {
     await btn.click();
-    await page.waitForTimeout(1000);
-    const notif = await page.locator(".notification").first().textContent().catch(() => "");
-    assert(notif.includes("Foundry Paint is working!"), "Notification shown on click");
+    await page.waitForTimeout(500);
+    const drawBtn = page.locator('[data-tool="paint-draw"]');
+    const drawVisible = await drawBtn.isVisible().catch(() => false);
+    assert(drawVisible, "Paint draw tool button appears after activating paint controls");
   }
 
   // 5. Module is registered and active in game.modules

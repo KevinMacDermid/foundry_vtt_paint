@@ -32,6 +32,14 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
     this._eraserCursor = null;
     /** Bound pointermove handler for eraser cursor */
     this._onStageMoveHandler = this._onStageMove.bind(this);
+    /** @type {{px:number,py:number}|null} line-tool start point (bitmap coords) */
+    this._lineStart = null;
+    /** @type {PIXI.Graphics|null} line-tool ghost preview */
+    this._linePreview = null;
+    /** Bound pointermove handler for line preview */
+    this._onLinePreviewMoveHandler = this._onLinePreviewMove.bind(this);
+    /** Bound keydown handler to cancel line chain via Escape */
+    this._onLineKeydownHandler = this._onLineKeydown.bind(this);
   }
 
   /** @override */
@@ -57,6 +65,11 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
   /** Whether we're in erase mode. */
   get isErasing() {
     return this.activeTool === "paint-erase";
+  }
+
+  /** Whether we're in line mode. */
+  get isLine() {
+    return this.activeTool === "paint-line";
   }
 
   // ── Lifecycle ────────────────────────────────────────────────────
@@ -191,15 +204,19 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
   /** @override */
   _deactivate() {
     super._deactivate();
-    document.body.classList.remove("foundry-paint-draw", "foundry-paint-erase");
+    document.body.classList.remove("foundry-paint-draw", "foundry-paint-erase", "foundry-paint-line");
     canvas.stage.off("pointermove", this._onStageMoveHandler);
+    this._cancelLineChain();
     this._eraserCursor?.clear();
   }
 
   _updateCursor() {
     document.body.classList.toggle("foundry-paint-draw", this.isDrawing);
     document.body.classList.toggle("foundry-paint-erase", this.isErasing);
+    document.body.classList.toggle("foundry-paint-line", this.isLine);
     if (!this.isErasing) this._eraserCursor?.clear();
+    // Cancel any in-progress line chain if we switched away from the line tool
+    if (!this.isLine) this._cancelLineChain();
   }
 
   // ── Eraser cursor ────────────────────────────────────────────────
@@ -299,12 +316,153 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
 
   /** @override */
   _onClickLeft(event) {
+    if (this._ready && this.isLine) {
+      this._handleLineClick(event);
+      return;
+    }
     // Single click — paint one pixel
     if (this._ready && (this.isDrawing || this.isErasing)) {
       this._paintAtEvent(event);
       this._refreshTexture();
       this._saveToScene();
     }
+  }
+
+  /** @override */
+  _onClickRight(event) {
+    // Right-click ends the line chain
+    this._cancelLineChain();
+  }
+
+  // ── Line tool ────────────────────────────────────────────────────
+
+  /** First click sets start; every subsequent click commits a segment and chains the next. Esc/RMB ends the chain. */
+  _handleLineClick(event) {
+    const { px, py } = this._eventToBitmapCoords(event);
+    if (px === null) return;
+
+    if (!this._lineStart) {
+      // First click — begin chain, register preview + keydown listeners
+      this._lineStart = { px, py };
+      canvas.stage.on("pointermove", this._onLinePreviewMoveHandler);
+      document.addEventListener("keydown", this._onLineKeydownHandler);
+      // Show a dot at the start point immediately
+      this._updateLinePreview(px, py);
+    } else {
+      // Next click — commit this segment, then chain: endpoint becomes new start
+      const { px: x0, py: y0 } = this._lineStart;
+      const [x1, y1] = this._snapToAxis(x0, y0, px, py);
+
+      const color = game.settings.get("foundry-paint", "brushColor");
+      this._ctx.fillStyle = color;
+      for (const [bx, by] of this._bresenham(x0, y0, x1, y1)) {
+        this._ctx.fillRect(bx, by, 1, 1);
+      }
+      this._refreshTexture();
+      this._saveToScene();
+
+      // Chain: the endpoint is now the start of the next segment
+      this._lineStart = { px: x1, py: y1 };
+      // Clear preview so it redraws cleanly on next mousemove
+      this._linePreview?.clear();
+    }
+  }
+
+  /** Cancel / end the active line chain (Esc or right-click). */
+  _cancelLineChain() {
+    if (this._lineStart === null) return;
+    this._lineStart = null;
+    this._linePreview?.clear();
+    canvas.stage.off("pointermove", this._onLinePreviewMoveHandler);
+    document.removeEventListener("keydown", this._onLineKeydownHandler);
+  }
+
+  /** Keydown handler — Escape ends the line chain. */
+  _onLineKeydown(event) {
+    if (event.key === "Escape") this._cancelLineChain();
+  }
+
+  /**
+   * Snap (x1,y1) to a horizontal or vertical line from (x0,y0).
+   * The dominant axis wins; ties go horizontal.
+   */
+  _snapToAxis(x0, y0, x1, y1) {
+    const dx = Math.abs(x1 - x0);
+    const dy = Math.abs(y1 - y0);
+    return dx >= dy ? [x1, y0] : [x0, y1];
+  }
+
+  /** Pointermove handler — updates the ghost line preview while placing a line. */
+  _onLinePreviewMove(event) {
+    if (!this._lineStart || !this.isLine) return;
+    const scene = canvas.scene;
+    const dims = scene.dimensions;
+    const sceneX = dims?.sceneX ?? 0;
+    const sceneY = dims?.sceneY ?? 0;
+    const pos = event.getLocalPosition(canvas.stage);
+    const px = Math.floor((pos.x - sceneX) / this.pixelSize);
+    const py = Math.floor((pos.y - sceneY) / this.pixelSize);
+    this._updateLinePreview(px, py);
+  }
+
+  /** Redraw the ghost preview from _lineStart to (px, py), snapped to H/V. */
+  _updateLinePreview(px, py) {
+    const scene = canvas.scene;
+    const dims = scene.dimensions;
+    const sceneX = dims?.sceneX ?? 0;
+    const sceneY = dims?.sceneY ?? 0;
+
+    if (!this._linePreview || this._linePreview.destroyed) {
+      this._linePreview = new PIXI.Graphics();
+      this.addChild(this._linePreview);
+    }
+
+    const g = this._linePreview;
+    g.clear();
+
+    const color = game.settings.get("foundry-paint", "brushColor");
+    const colorInt = parseInt(color.replace("#", ""), 16);
+    const ps = this.pixelSize;
+
+    // If no start yet, just draw the hover dot (shouldn't normally be called)
+    if (!this._lineStart) return;
+
+    const { px: x0, py: y0 } = this._lineStart;
+    const [x1, y1] = this._snapToAxis(x0, y0, px, py);
+
+    // Ghost line — brush colour at 50% opacity
+    g.beginFill(colorInt, 0.5);
+    for (const [bx, by] of this._bresenham(x0, y0, x1, y1)) {
+      g.drawRect(sceneX + bx * ps, sceneY + by * ps, ps, ps);
+    }
+    g.endFill();
+
+    // Start-point marker — white ring so it's visible on any colour
+    g.lineStyle(1, 0xffffff, 0.9);
+    g.beginFill(colorInt, 0.9);
+    g.drawRect(sceneX + x0 * ps, sceneY + y0 * ps, ps, ps);
+    g.endFill();
+    g.lineStyle(0);
+  }
+
+  /**
+   * Convert an interaction event to bitmap pixel coordinates.
+   * Returns { px, py } — both null if out of bounds.
+   */
+  _eventToBitmapCoords(event) {
+    const scene = canvas.scene;
+    const dims = scene.dimensions;
+    const sceneX = dims?.sceneX ?? 0;
+    const sceneY = dims?.sceneY ?? 0;
+    const pos = event.interactionData?.destination
+      ?? event.interactionData?.origin
+      ?? event.getLocalPosition?.(canvas.stage)
+      ?? { x: 0, y: 0 };
+    const px = Math.floor((pos.x - sceneX) / this.pixelSize);
+    const py = Math.floor((pos.y - sceneY) / this.pixelSize);
+    if (px < 0 || px >= this.gridW || py < 0 || py >= this.gridH)
+      return { px: null, py: null };
+    return { px, py };
   }
 
   /** Paint or erase at the event's scene position, interpolating from last position. */
