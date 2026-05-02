@@ -44,7 +44,7 @@ export class PaintControls {
         "paint-line": {
           name: "paint-line",
           title: "Line (H/V) — click chain, Esc/RMB to end",
-          icon: "fa-solid fa-ruler-combined",
+          icon: "fa-solid fa-turn-down",
           order: 2,
         },
         "paint-erase": {
