@@ -24,7 +24,7 @@ export class PaintControls {
         },
         "paint-line": {
           name: "paint-line",
-          title: "Grid Lines — click chain, Esc/RMB to end",
+          title: "Grid Lines",
           icon: "fa-solid fa-minus",
           order: 2,
         },
@@ -36,7 +36,7 @@ export class PaintControls {
         },
         "paint-text": {
           name: "paint-text",
-          title: "Text (uses brush colour)",
+          title: "Text",
           icon: "fa-solid fa-font",
           order: 4,
           button: true,
