@@ -1,12 +1,13 @@
 # Foundry Paint
-
-A freehand painting and drawing module for [Foundry VTT](https://foundryvtt.com/) v13.
+This is a simple bitmap suite of drawing tools for Foundry VTT. It is purposefully minimalist,
+including just basic drawing tools to avoid cognitive load from trying to find the right tool
+and configuration.
 
 ## Features
-
 - **Draw tool** — freehand brush painting directly on the canvas
 - **Line tool** — click to start a chain of horizontal/vertical lines; Esc or right-click to end
 - **Erase tool** — erase painted areas with a configurable eraser size
+- **Text tool** - This is just a shortcut to pull up the Foundry text tool using the current brush color.
 - **Brush sizes** — small, medium, and large brush sizes for draw and line tools
 - **Color swatches** — quickly switch between 8 preset colours (black, white, red, orange, yellow, green, blue, purple)
 - **Opacity control** — adjust the opacity of the paint layer per scene
@@ -31,16 +32,6 @@ A freehand painting and drawing module for [Foundry VTT](https://foundryvtt.com/
    - **Erase** — click and drag to erase
 3. Adjust **brush size** (1–3 pixels) in the flyout panel that appears next to the draw/line tools
 4. Adjust **eraser size** in the flyout panel that appears next to the erase tool
-
-## Settings
-
-| Setting | Scope | Description |
-|---|---|---|
-| Pixel Size | World | Size of each paint pixel in scene units (1–100, default 5). Lower = higher resolution. |
-| Paint Opacity | World | Opacity of the paint layer (0.1–1.0, default 0.7) |
-| Brush Color | Client | Currently selected brush colour |
-| Brush Size | Client | Currently selected brush size (1–3 pixels) |
-| Eraser Size | Client | Currently selected eraser size |
 
 ## Compatibility
 
