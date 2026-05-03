@@ -3,7 +3,7 @@
  * controls bar when the erase tool is active. Lets the user pick eraser size.
  */
 
-export const ERASER_SIZES = [1, 2, 4, 8];
+export const ERASER_SIZES = [4, 8, 16, 32];
 
 export class EraserPanel {
   constructor() {

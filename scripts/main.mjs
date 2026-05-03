@@ -52,7 +52,7 @@ Hooks.once("init", () => {
     scope: "client",
     config: false,
     type: Number,
-    default: 1,
+    default: 4,
   });
 
   game.settings.register("foundry-paint", "opacity", {
