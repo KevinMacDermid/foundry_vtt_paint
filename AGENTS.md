@@ -2,7 +2,8 @@
 
 ## General Notes for Future Sessions
 
-- **Each `Bash` tool call is a fresh shell** — environment variables like `GIT_SSH_COMMAND` do NOT persist between calls. Always set them in the same command as the tool that needs them, e.g. `source /home/pi/workspace/.profile.d/ssh.sh && git push`.
+- **Each `Bash` tool call is a fresh shell** — environment variables do NOT persist between calls. Keep this in mind when chaining dependent commands.
+- **SSH for GitHub just works** as long as `/root/.ssh` is symlinked to `/home/pi/workspace/.ssh`. Run `ln -sf /home/pi/workspace/.ssh /root/.ssh` if git push fails with a host key error (the symlink is lost on container restart). The `.profile.d/ssh.sh` script does this automatically if sourced.
 - **Docker container restarts wipe system state** — any `apt-get` installs, global npm packages, or other system-level changes from a previous session are gone. Reinstall as needed. Workspace files (code, keys, etc.) persist.
 - **Playwright deps may be missing after restart** — run `npx playwright install-deps chromium` if the smoke test fails to launch a browser.
 - **When you discover a new environmental quirk or workaround, add it here** so future sessions don't have to rediscover it.
