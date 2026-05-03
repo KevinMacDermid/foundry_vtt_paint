@@ -48,8 +48,12 @@ export function installTextToolPatch() {
     if (_active && game.activeTool === "text") {
       data.textColor   = _color;
       data.strokeWidth = 0;
-      // fillAlpha intentionally left at Foundry's default (0.10) — Foundry requires
-      // visible text, fill, OR line at creation time; text is empty until the user types.
+      // Foundry requires visible text, fill, OR line at creation (text is empty until typed).
+      // Force a nearly-invisible solid fill so validation always passes, regardless of the
+      // user's saved drawing defaults (which may have fillType=NONE or fillAlpha=0).
+      data.fillType  = CONST.DRAWING_FILL_TYPES.SOLID; // 1
+      data.fillAlpha = 0.01;
+      data.fillColor = "#000000";
     }
     return data;
   };
