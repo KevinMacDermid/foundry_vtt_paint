@@ -22,10 +22,11 @@ export class BrushSizePanel {
 
     const el = document.createElement("div");
     el.id = "foundry-paint-brush-panel";
-    el.innerHTML = BRUSH_SIZES.map(s => `
+    const visualSizes = [6, 12, 18];
+    el.innerHTML = BRUSH_SIZES.map((s, i) => `
       <button class="brush-size-btn ${s === currentSize ? "active" : ""}"
               data-size="${s}" title="${s}×${s} pixels">
-        <div class="brush-size-icon" style="width:16px; height:16px;"></div>
+        <div class="brush-size-icon" style="width:${visualSizes[i]}px; height:${visualSizes[i]}px;"></div>
       </button>
     `).join("");
 
