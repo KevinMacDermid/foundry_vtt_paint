@@ -25,7 +25,7 @@ export class BrushSizePanel {
     el.innerHTML = BRUSH_SIZES.map(s => `
       <button class="brush-size-btn ${s === currentSize ? "active" : ""}"
               data-size="${s}" title="${s}×${s} pixels">
-        <div class="brush-size-icon" style="width:${4 + s * 5}px; height:${4 + s * 5}px;"></div>
+        <div class="brush-size-icon" style="width:16px; height:16px;"></div>
       </button>
     `).join("");
 

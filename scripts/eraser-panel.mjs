@@ -25,7 +25,7 @@ export class EraserPanel {
     el.innerHTML = ERASER_SIZES.map(s => `
       <button class="eraser-size-btn ${s === currentSize ? "active" : ""}"
               data-size="${s}" title="${s}×${s} pixels">
-        <div class="eraser-size-icon" style="width:${4 + s * 3}px; height:${4 + s * 3}px;"></div>
+        <div class="eraser-size-icon" style="width:16px; height:16px;"></div>
       </button>
     `).join("");
 
