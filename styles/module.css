@@ -15,21 +15,54 @@
   cursor: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><rect x="2" y="4" width="12" height="9" rx="1.5" transform="rotate(-30 8 8)" fill="%23e8e8e8" stroke="%23333" stroke-width="0.8"/><rect x="2" y="4" width="12" height="4.5" rx="1" transform="rotate(-30 8 8)" fill="%23f28b82" stroke="%23333" stroke-width="0.8"/></svg>') 2 14, crosshair !important;
 }
 
-/* ── Color swatch buttons ───────────────────────────────────────── */
+/* ── Colour picker toolbar button ─────────────────────────────── */
 
-/* Color swatch buttons — the button itself is the FA icon element */
-[data-tool="color-black"]  { color: #000000 !important; text-shadow: 0 0 2px #aaa; }
-[data-tool="color-white"]  { color: #ffffff !important; text-shadow: 0 0 2px #000; }
-[data-tool="color-red"]    { color: #e03030 !important; }
-[data-tool="color-orange"] { color: #e07820 !important; }
-[data-tool="color-yellow"] { color: #d4c800 !important; }
-[data-tool="color-green"]  { color: #30a030 !important; }
-[data-tool="color-blue"]   { color: #2060e0 !important; }
-[data-tool="color-purple"] { color: #9030c0 !important; }
+/* Colour is set via inline style by ColorPanel.updateButton() */
+[data-tool="paint-color"] {
+  transition: filter 0.1s ease;
+}
+[data-tool="paint-color"]:hover {
+  filter: drop-shadow(0 0 4px currentColor);
+}
 
-/* Active color: glow in the swatch colour */
-[data-tool^="color-"].active,
-[data-tool^="color-"][aria-pressed="true"] {
+/* ── Colour flyout panel ───────────────────────────────────────── */
+
+#foundry-paint-color-panel {
+  position: fixed;
+  left: 92px;
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+  padding: 4px;
+  background: rgba(11, 10, 19, 0.9);
+  border: 1px solid rgba(201, 89, 63, 0.6);
+  border-radius: 4px;
+  z-index: 31;
+}
+
+.color-swatch-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+  cursor: pointer;
+  padding: 0;
+  font-size: 14px;
+  transition: filter 0.1s ease;
+}
+
+.color-swatch-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  filter: drop-shadow(0 0 4px currentColor);
+}
+
+.color-swatch-btn.active {
+  border-color: rgb(201, 89, 63);
+  background: rgba(201, 89, 63, 0.2);
   filter: drop-shadow(0 0 4px currentColor);
 }
 

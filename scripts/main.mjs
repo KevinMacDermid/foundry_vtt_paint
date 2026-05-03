@@ -1,5 +1,5 @@
 import { PaintCanvasLayer } from "./paint-canvas-layer.mjs";
-import { PaintControls, COLORS } from "./paint-controls.mjs";
+import { PaintControls, colorPanel } from "./paint-controls.mjs";
 import { EraserPanel } from "./eraser-panel.mjs";
 import { BrushSizePanel } from "./brush-size-panel.mjs";
 
@@ -83,19 +83,27 @@ Hooks.on("canvasReady", () => {
   canvas.paint?.initBitmap();
 });
 
-// Update cursor, color buttons, and eraser panel when control/tool changes
+// Update cursor, colour button, and flyout panels when control/tool changes
 Hooks.on("renderSceneControls", () => {
   canvas.paint?._updateCursor();
-  PaintControls.updateColorButtons();
+  colorPanel.updateButton();
+  _syncColorPanel();
   _syncEraserPanel();
   _syncBrushSizePanel();
 });
 Hooks.on("activateSceneControls", () => {
   canvas.paint?._updateCursor();
-  PaintControls.updateColorButtons();
+  colorPanel.updateButton();
+  _syncColorPanel();
   _syncEraserPanel();
   _syncBrushSizePanel();
 });
+
+function _syncColorPanel() {
+  // Hide the colour flyout when switching away from paint controls entirely
+  const onPaint = ui.controls?.control?.name === "foundry-paint";
+  if (!onPaint) colorPanel.hide();
+}
 
 function _syncEraserPanel() {
   const isErasing = ui.controls?.control?.name === "foundry-paint"
