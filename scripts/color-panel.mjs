@@ -12,6 +12,7 @@ export const COLORS = [
   { name: "color-green",  title: "Green",  hex: "#30a030" },
   { name: "color-blue",   title: "Blue",   hex: "#2060e0" },
   { name: "color-purple", title: "Purple", hex: "#9030c0" },
+  { name: "color-brown",  title: "Brown",  hex: "#7a4010" },
 ];
 
 export class ColorPanel {
