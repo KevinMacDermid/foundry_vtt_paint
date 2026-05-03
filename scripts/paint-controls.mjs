@@ -37,13 +37,13 @@ export class PaintControls {
       tools: {
         "paint-draw": {
           name: "paint-draw",
-          title: "Draw",
+          title: "Freehand Draw",
           icon: "fa-solid fa-paintbrush",
           order: 1,
         },
         "paint-line": {
           name: "paint-line",
-          title: "Line (H/V) — click chain, Esc/RMB to end",
+          title: "Grid Lines — click chain, Esc/RMB to end",
           icon: "fa-solid fa-minus",
           order: 2,
         },
