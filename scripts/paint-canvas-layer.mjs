@@ -34,6 +34,12 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
     this._eraserCursor = null;
     /** Bound pointermove handler for eraser cursor */
     this._onStageMoveHandler = this._onStageMove.bind(this);
+    /** Safety-net: clear stroke state on any pointerup so strokes never bleed across lifts */
+    this._onPointerUpHandler = () => {
+      this._isPainting = false;
+      this._lastPx = null;
+      this._lastPy = null;
+    };
     /** @type {{px:number,py:number}|null} line-tool start point (bitmap coords) */
     this._lineStart = null;
     /** @type {PIXI.Graphics|null} line-tool ghost preview */
@@ -193,6 +199,7 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
     this.interactiveChildren = true;
     this._updateCursor();
     canvas.stage.on("pointermove", this._onStageMoveHandler);
+    window.addEventListener("pointerup", this._onPointerUpHandler);
   }
 
   /** @override */
@@ -200,6 +207,7 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
     super._deactivate();
     document.body.classList.remove("foundry-paint-draw", "foundry-paint-erase", "foundry-paint-line");
     canvas.stage.off("pointermove", this._onStageMoveHandler);
+    window.removeEventListener("pointerup", this._onPointerUpHandler);
     this._cancelLineChain();
     this._eraserCursor?.clear();
   }
