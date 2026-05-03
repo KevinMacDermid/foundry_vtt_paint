@@ -21,8 +21,8 @@ Hooks.once("init", () => {
     scope: "world",
     config: true,
     type: Number,
-    default: 10,
-    range: { min: 5, max: 100, step: 5 },
+    default: 5,
+    range: { min: 1, max: 100, step: 1 },
     onChange: () => {
       if (canvas.paint) canvas.paint.rebuild();
     },
