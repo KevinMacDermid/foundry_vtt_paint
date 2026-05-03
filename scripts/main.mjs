@@ -2,6 +2,7 @@ import { PaintCanvasLayer } from "./paint-canvas-layer.mjs";
 import { PaintControls, colorPanel } from "./paint-controls.mjs";
 import { EraserPanel } from "./eraser-panel.mjs";
 import { BrushSizePanel } from "./brush-size-panel.mjs";
+import { installTextToolPatch, deactivatePaintText } from "./text-tool.mjs";
 
 const eraserPanel = new EraserPanel();
 const brushSizePanel = new BrushSizePanel();
@@ -71,6 +72,7 @@ Hooks.once("init", () => {
 
 Hooks.once("ready", () => {
   console.log("Foundry Paint | Module ready");
+  installTextToolPatch();
 });
 
 // Register scene controls (also registers the canvas layer)
@@ -90,6 +92,7 @@ Hooks.on("renderSceneControls", () => {
   _syncColorPanel();
   _syncEraserPanel();
   _syncBrushSizePanel();
+  _syncTextTool();
 });
 Hooks.on("activateSceneControls", () => {
   canvas.paint?._updateCursor();
@@ -97,12 +100,20 @@ Hooks.on("activateSceneControls", () => {
   _syncColorPanel();
   _syncEraserPanel();
   _syncBrushSizePanel();
+  _syncTextTool();
 });
 
 function _syncColorPanel() {
   // Hide the colour flyout when switching away from paint controls entirely
   const onPaint = ui.controls?.control?.name === "foundry-paint";
   if (!onPaint) colorPanel.hide();
+}
+
+function _syncTextTool() {
+  // Deactivate paint-text mode if the user has moved off drawings/text
+  const onDrawingsText = ui.controls?.control?.name === "drawings"
+    && ui.controls?.activeTool === "text";
+  if (!onDrawingsText) deactivatePaintText();
 }
 
 function _syncEraserPanel() {

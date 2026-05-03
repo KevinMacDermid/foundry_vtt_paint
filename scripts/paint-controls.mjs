@@ -3,6 +3,7 @@
  */
 import { PaintCanvasLayer } from "./paint-canvas-layer.mjs";
 import { ColorPanel } from "./color-panel.mjs";
+import { activatePaintText } from "./text-tool.mjs";
 
 export const colorPanel = new ColorPanel();
 
@@ -32,6 +33,14 @@ export class PaintControls {
           title: "Erase",
           icon: "fa-solid fa-eraser",
           order: 3,
+        },
+        "paint-text": {
+          name: "paint-text",
+          title: "Text (uses brush colour)",
+          icon: "fa-solid fa-font",
+          order: 4,
+          button: true,
+          onClick: () => activatePaintText(),
         },
         "paint-color": {
           name: "paint-color",
