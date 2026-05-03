@@ -15,6 +15,16 @@
   cursor: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><rect x="2" y="4" width="12" height="9" rx="1.5" transform="rotate(-30 8 8)" fill="%23e8e8e8" stroke="%23333" stroke-width="0.8"/><rect x="2" y="4" width="12" height="4.5" rx="1" transform="rotate(-30 8 8)" fill="%23f28b82" stroke="%23333" stroke-width="0.8"/></svg>') 2 14, crosshair !important;
 }
 
+/* ── Button tools (text, colour, clear) ────────────────────────── */
+
+/* Foundry gives button=true tools a warm orange border that looks like the active/selected
+   state. Override to use the same cool border as regular tools. */
+[data-tool="paint-text"],
+[data-tool="paint-color"],
+[data-tool="paint-clear"] {
+  --control-button-border-color: var(--control-border-color);
+}
+
 /* ── Colour picker toolbar button ─────────────────────────────── */
 
 /* Colour is set via inline style by ColorPanel.updateButton() */
