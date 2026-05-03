@@ -3,7 +3,7 @@
  * controls bar when the draw or line tool is active. Lets the user pick brush size.
  */
 
-export const BRUSH_SIZES = [1, 2, 3];
+export const BRUSH_SIZES = [1, 2, 5, 10];
 
 export class BrushSizePanel {
   constructor() {
@@ -22,7 +22,7 @@ export class BrushSizePanel {
 
     const el = document.createElement("div");
     el.id = "foundry-paint-brush-panel";
-    const visualSizes = [6, 12, 18];
+    const visualSizes = [6, 10, 14, 18];
     el.innerHTML = BRUSH_SIZES.map((s, i) => `
       <button class="brush-size-btn ${s === currentSize ? "active" : ""}"
               data-size="${s}" title="${s}×${s} pixels">
