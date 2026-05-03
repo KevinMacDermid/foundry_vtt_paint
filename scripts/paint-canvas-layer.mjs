@@ -10,10 +10,12 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
     super();
     /** @type {PIXI.Sprite} */
     this._sprite = null;
-    /** @type {OffscreenCanvas} */
+    /** @type {HTMLCanvasElement} */
     this._bitmap = null;
-    /** @type {OffscreenCanvasRenderingContext2D} */
+    /** @type {CanvasRenderingContext2D} */
     this._ctx = null;
+    /** @type {PIXI.BaseTexture|null} persistent base texture (updated in place each frame) */
+    this._baseTexture = null;
     /** @type {number} */
     this.gridW = 0;
     /** @type {number} */
@@ -101,10 +103,13 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
     this.gridW = Math.ceil(sceneW / this.pixelSize);
     this.gridH = Math.ceil(sceneH / this.pixelSize);
 
-    // Create offscreen bitmap
-    this._bitmap = new OffscreenCanvas(this.gridW, this.gridH);
+    // Create bitmap canvas
+    this._bitmap = document.createElement("canvas");
+    this._bitmap.width = this.gridW;
+    this._bitmap.height = this.gridH;
     this._ctx = this._bitmap.getContext("2d");
     this._ctx.imageSmoothingEnabled = false;
+    this._baseTexture = null;
 
     // Build the PIXI sprite
     this._ready = true; // assume ready; _loadFromScene may set false temporarily
@@ -121,6 +126,7 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
     this._sprite = null;
     this._bitmap = null;
     this._ctx = null;
+    this._baseTexture = null;
     this.gridW = 0;
     this.gridH = 0;
     this.initBitmap();
@@ -140,38 +146,26 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
 
   // ── Texture ──────────────────────────────────────────────────────
 
-  /** Re-render the offscreen bitmap into the PIXI sprite. */
+  /** Re-render the bitmap into the PIXI sprite. First call creates the texture; subsequent calls just update it in place. */
   _refreshTexture() {
     const scene = canvas.scene;
     const dims = scene.dimensions;
     const sceneX = dims?.sceneX ?? 0;
     const sceneY = dims?.sceneY ?? 0;
 
-    const imageData = this._ctx.getImageData(0, 0, this.gridW, this.gridH);
-    const pixels = new Uint8Array(imageData.data.buffer);
-
-    // Destroy old texture
-    if (this._sprite?.texture && this._sprite.texture !== PIXI.Texture.EMPTY) {
-      this._sprite.texture.destroy(true);
-    }
-
-    // Create texture via a temp canvas for compatibility
-    const tmpCanvas = document.createElement("canvas");
-    tmpCanvas.width = this.gridW;
-    tmpCanvas.height = this.gridH;
-    const tmpCtx = tmpCanvas.getContext("2d");
-    const tmpImg = tmpCtx.createImageData(this.gridW, this.gridH);
-    tmpImg.data.set(pixels);
-    tmpCtx.putImageData(tmpImg, 0, 0);
-
-    const bt = PIXI.BaseTexture.from(tmpCanvas, { scaleMode: PIXI.SCALE_MODES.NEAREST });
-    const texture = new PIXI.Texture(bt);
-
-    if (!this._sprite) {
-      this._sprite = new PIXI.Sprite(texture);
-      this.addChild(this._sprite);
+    if (!this._baseTexture) {
+      // First time: create a BaseTexture from our canvas and keep it forever
+      this._baseTexture = PIXI.BaseTexture.from(this._bitmap, { scaleMode: PIXI.SCALE_MODES.NEAREST });
+      const texture = new PIXI.Texture(this._baseTexture);
+      if (!this._sprite) {
+        this._sprite = new PIXI.Sprite(texture);
+        this.addChild(this._sprite);
+      } else {
+        this._sprite.texture = texture;
+      }
     } else {
-      this._sprite.texture = texture;
+      // Subsequent frames: just push the updated canvas pixels to the GPU
+      this._baseTexture.update();
     }
 
     this._sprite.x = sceneX;
@@ -288,7 +282,12 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
     this._isPainting = true;
     this._lastPx = null;
     this._lastPy = null;
-    this._paintAtEvent(event);
+    // Cache settings for the duration of this stroke
+    this._strokeColor = game.settings.get("foundry-paint", "brushColor");
+    this._strokeBrushSize = game.settings.get("foundry-paint", "brushSize");
+    this._strokeEraserSize = game.settings.get("foundry-paint", "eraserSize");
+    // Paint at origin (actual click point) first, then destination if different
+    this._paintAtEvent(event, true);
   }
 
   /** @override */
@@ -467,18 +466,21 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
     return { px, py };
   }
 
-  /** Paint or erase at the event's scene position, interpolating from last position. */
-  _paintAtEvent(event) {
+  /**
+   * Paint or erase at the event's scene position, interpolating from last position.
+   * @param {Event} event
+   * @param {boolean} [useOrigin=false] prefer interactionData.origin over destination (drag start)
+   */
+  _paintAtEvent(event, useOrigin = false) {
     const scene = canvas.scene;
     const dims = scene.dimensions;
     const sceneX = dims?.sceneX ?? 0;
     const sceneY = dims?.sceneY ?? 0;
 
-    // Get scene-space position from the interaction event
-    const pos = event.interactionData?.destination
-      ?? event.interactionData?.origin
-      ?? event.getLocalPosition?.(canvas.stage)
-      ?? { x: 0, y: 0 };
+    // At drag start, prefer origin (actual click point); during drag, prefer destination
+    const pos = useOrigin
+      ? (event.interactionData?.origin ?? event.interactionData?.destination ?? event.getLocalPosition?.(canvas.stage) ?? { x: 0, y: 0 })
+      : (event.interactionData?.destination ?? event.interactionData?.origin ?? event.getLocalPosition?.(canvas.stage) ?? { x: 0, y: 0 });
 
     const px = Math.floor((pos.x - sceneX) / this.pixelSize);
     const py = Math.floor((pos.y - sceneY) / this.pixelSize);
@@ -496,15 +498,16 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
     this._lastPy = py;
 
     if (this.isDrawing) {
-      const color = game.settings.get("foundry-paint", "brushColor");
-      const size = game.settings.get("foundry-paint", "brushSize");
+      // Use cached settings from stroke start to avoid per-event settings reads
+      const color = this._strokeColor ?? game.settings.get("foundry-paint", "brushColor");
+      const size = this._strokeBrushSize ?? game.settings.get("foundry-paint", "brushSize");
       const half = Math.floor(size / 2);
       this._ctx.fillStyle = color;
       for (const [bx, by] of this._bresenham(x0, y0, px, py)) {
         this._ctx.fillRect(bx - half, by - half, size, size);
       }
     } else if (this.isErasing) {
-      const size = game.settings.get("foundry-paint", "eraserSize");
+      const size = this._strokeEraserSize ?? game.settings.get("foundry-paint", "eraserSize");
       const half = Math.floor(size / 2);
       for (const [bx, by] of this._bresenham(x0, y0, px, py)) {
         this._ctx.clearRect(bx - half, by - half, size, size);
@@ -537,12 +540,7 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
     const scene = canvas.scene;
     if (!scene) return;
 
-    const blob = await this._bitmap.convertToBlob({ type: "image/png" });
-    const reader = new FileReader();
-    const dataUrl = await new Promise((resolve) => {
-      reader.onload = () => resolve(reader.result);
-      reader.readAsDataURL(blob);
-    });
+    const dataUrl = this._bitmap.toDataURL("image/png");
 
     await scene.setFlag("foundry-paint", "bitmap", dataUrl);
     await scene.setFlag("foundry-paint", "pixelSize", this.pixelSize);
