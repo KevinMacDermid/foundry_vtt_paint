@@ -48,8 +48,8 @@ export function installTextToolPatch() {
     if (_active && game.activeTool === "text") {
       data.textColor   = _color;
       data.strokeWidth = 0;
-      data.strokeAlpha = 0;
-      data.fillAlpha   = 0;
+      // fillAlpha intentionally left at Foundry's default (0.10) — Foundry requires
+      // visible text, fill, OR line at creation time; text is empty until the user types.
     }
     return data;
   };
