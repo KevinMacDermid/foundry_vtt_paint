@@ -1,8 +1,10 @@
 import { PaintCanvasLayer } from "./paint-canvas-layer.mjs";
 import { PaintControls, COLORS } from "./paint-controls.mjs";
 import { EraserPanel } from "./eraser-panel.mjs";
+import { BrushSizePanel } from "./brush-size-panel.mjs";
 
 const eraserPanel = new EraserPanel();
+const brushSizePanel = new BrushSizePanel();
 
 Hooks.once("init", () => {
   console.log("Foundry Paint | Initializing");
@@ -33,6 +35,15 @@ Hooks.once("init", () => {
     config: true,
     type: String,
     default: "#000000",
+  });
+
+  game.settings.register("foundry-paint", "brushSize", {
+    name: "Brush Size",
+    hint: "Size of the brush in bitmap pixels.",
+    scope: "client",
+    config: false,
+    type: Number,
+    default: 1,
   });
 
   game.settings.register("foundry-paint", "eraserSize", {
@@ -77,11 +88,13 @@ Hooks.on("renderSceneControls", () => {
   canvas.paint?._updateCursor();
   PaintControls.updateColorButtons();
   _syncEraserPanel();
+  _syncBrushSizePanel();
 });
 Hooks.on("activateSceneControls", () => {
   canvas.paint?._updateCursor();
   PaintControls.updateColorButtons();
   _syncEraserPanel();
+  _syncBrushSizePanel();
 });
 
 function _syncEraserPanel() {
@@ -89,4 +102,13 @@ function _syncEraserPanel() {
     && ui.controls?.activeTool === "paint-erase";
   if (isErasing) eraserPanel.show();
   else eraserPanel.hide();
+}
+
+function _syncBrushSizePanel() {
+  const tool = ui.controls?.control?.name === "foundry-paint"
+    ? ui.controls?.activeTool
+    : null;
+  const showPanel = tool === "paint-draw" || tool === "paint-line";
+  if (showPanel) brushSizePanel.show();
+  else brushSizePanel.hide();
 }

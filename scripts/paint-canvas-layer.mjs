@@ -354,9 +354,11 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
       const [x1, y1] = this._snapToAxis(x0, y0, px, py);
 
       const color = game.settings.get("foundry-paint", "brushColor");
+      const size = game.settings.get("foundry-paint", "brushSize");
+      const half = Math.floor(size / 2);
       this._ctx.fillStyle = color;
       for (const [bx, by] of this._bresenham(x0, y0, x1, y1)) {
-        this._ctx.fillRect(bx, by, 1, 1);
+        this._ctx.fillRect(bx - half, by - half, size, size);
       }
       this._refreshTexture();
       this._saveToScene();
@@ -495,9 +497,11 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
 
     if (this.isDrawing) {
       const color = game.settings.get("foundry-paint", "brushColor");
+      const size = game.settings.get("foundry-paint", "brushSize");
+      const half = Math.floor(size / 2);
       this._ctx.fillStyle = color;
       for (const [bx, by] of this._bresenham(x0, y0, px, py)) {
-        this._ctx.fillRect(bx, by, 1, 1);
+        this._ctx.fillRect(bx - half, by - half, size, size);
       }
     } else if (this.isErasing) {
       const size = game.settings.get("foundry-paint", "eraserSize");

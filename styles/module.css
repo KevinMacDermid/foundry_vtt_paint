@@ -33,6 +33,49 @@
   filter: drop-shadow(0 0 4px currentColor);
 }
 
+/* ── Brush size flyout panel ──────────────────────────────────── */
+#foundry-paint-brush-panel {
+  position: fixed;
+  left: 92px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px;
+  background: rgba(11, 10, 19, 0.9);
+  border: 1px solid rgba(201, 89, 63, 0.6);
+  border-radius: 4px;
+  z-index: 31;
+}
+
+.brush-size-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.brush-size-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.brush-size-btn.active {
+  border-color: rgb(201, 89, 63);
+  background: rgba(201, 89, 63, 0.2);
+}
+
+.brush-size-icon {
+  background: rgb(239, 230, 216);
+  border: 1px solid rgba(0, 0, 0, 0.5);
+  border-radius: 1px;
+}
+
 /* ── Eraser size flyout panel ──────────────────────────────────── */
 #foundry-paint-eraser-panel {
   position: fixed;
