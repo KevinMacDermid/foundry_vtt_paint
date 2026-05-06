@@ -35,7 +35,12 @@ To fix this, add a GitHub Actions workflow (`.github/workflows/release.yml`) tha
 3. Creates a GitHub Release with `module.json` and `module.zip` as assets
 4. Updates `manifest` and `download` fields in `module.json` to point to the release assets
 
-No `gh` CLI available in the container — must be done via GitHub Actions. After any feature, fix, or meaningful change is verified (smoke test passes or manually confirmed), commit immediately with a clear message. Don't batch unrelated changes.
+No `gh` CLI available in the container — can be done via GitHub Actions OR manually:
+1. `zip -r module.zip . --exclude ".git/*"` to build the zip
+2. Upload zip + module.json to a GitHub release via web UI or GitHub REST API with curl
+3. Update manifest/download fields in module.json to point to release asset URLs before tagging
+
+Hold off on this until the module feels ready to share with the community. After any feature, fix, or meaningful change is verified (smoke test passes or manually confirmed), commit immediately with a clear message. Don't batch unrelated changes.
 - **Source SSH before pushing**: `source /home/pi/workspace/.profile.d/ssh.sh` — must be run each session or `git push` will fail with host key verification errors.
 - **Run the smoke test before committing.** `node test/smoke.mjs` — server must be running and Gamemaster must not be logged in. If the test fails at sign-in, it may be because a human user is already logged in as Gamemaster at the same time; ask them to log out and retry.
 - **Git identity** is pre-configured (`Foundry Paint Dev / dev@foundry-paint.local`).
