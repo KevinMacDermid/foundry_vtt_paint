@@ -112,20 +112,20 @@ function _syncColorPanel() {
 function _syncTextTool() {
   // Deactivate paint-text mode if the user has moved off drawings/text
   const onDrawingsText = ui.controls?.control?.name === "drawings"
-    && ui.controls?.activeTool === "text";
+    && ui.controls?.tool?.name === "text";
   if (!onDrawingsText) deactivatePaintText();
 }
 
 function _syncEraserPanel() {
   const isErasing = ui.controls?.control?.name === "foundry-paint"
-    && ui.controls?.activeTool === "paint-erase";
+    && ui.controls?.tool?.name === "paint-erase";
   if (isErasing) eraserPanel.show();
   else eraserPanel.hide();
 }
 
 function _syncBrushSizePanel() {
   const tool = ui.controls?.control?.name === "foundry-paint"
-    ? ui.controls?.activeTool
+    ? ui.controls?.tool?.name
     : null;
   const showPanel = tool === "paint-draw" || tool === "paint-line";
   if (showPanel) brushSizePanel.show();

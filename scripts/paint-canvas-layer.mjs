@@ -61,7 +61,7 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
   /** The currently active paint tool name, e.g. "paint-draw" or "paint-erase". */
   get activeTool() {
     return ui.controls?.control?.name === "foundry-paint"
-      ? ui.controls.activeTool
+      ? ui.controls.tool?.name
       : null;
   }
 
