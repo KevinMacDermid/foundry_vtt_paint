@@ -290,10 +290,8 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
     this._isPainting = true;
     this._lastPx = null;
     this._lastPy = null;
-    // Cache settings for the duration of this stroke
+    // Cache colour for stroke consistency; sizes are read fresh each event (cheap + avoids stale values)
     this._strokeColor = game.settings.get("foundry-paint", "brushColor");
-    this._strokeBrushSize = game.settings.get("foundry-paint", "brushSize");
-    this._strokeEraserSize = game.settings.get("foundry-paint", "eraserSize");
     // Paint at origin (actual click point) first, then destination if different
     this._paintAtEvent(event, true);
   }
@@ -508,14 +506,14 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
     if (this.isDrawing) {
       // Use cached settings from stroke start to avoid per-event settings reads
       const color = this._strokeColor ?? game.settings.get("foundry-paint", "brushColor");
-      const size = this._strokeBrushSize ?? game.settings.get("foundry-paint", "brushSize");
+      const size = game.settings.get("foundry-paint", "brushSize");
       const half = Math.floor(size / 2);
       this._ctx.fillStyle = color;
       for (const [bx, by] of this._bresenham(x0, y0, px, py)) {
         this._ctx.fillRect(bx - half, by - half, size, size);
       }
     } else if (this.isErasing) {
-      const size = this._strokeEraserSize ?? game.settings.get("foundry-paint", "eraserSize");
+      const size = game.settings.get("foundry-paint", "eraserSize");
       const half = Math.floor(size / 2);
       for (const [bx, by] of this._bresenham(x0, y0, px, py)) {
         this._ctx.clearRect(bx - half, by - half, size, size);
