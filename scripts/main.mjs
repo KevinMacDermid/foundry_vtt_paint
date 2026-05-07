@@ -81,6 +81,13 @@ Hooks.on("getSceneControlButtons", (controls) => {
 });
 
 // Initialize the bitmap when the canvas is ready
+// Reload bitmap when another client updates the scene flags
+Hooks.on("updateScene", (scene, delta) => {
+  if ( scene.id !== canvas.scene?.id ) return;
+  if ( !foundry.utils.hasProperty(delta, "flags.foundry-paint") ) return;
+  paintLayer?._loadFromScene();
+});
+
 Hooks.on("canvasReady", () => {
   canvas.paint?.initBitmap();
 });
