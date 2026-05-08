@@ -124,6 +124,10 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
     // Load saved data (may set _ready=false until image loads)
     this._loadFromScene();
 
+    // Periodic GM→player sync: GM broadcasts canvas every 30s to correct any drift
+    if (this._syncInterval) clearInterval(this._syncInterval);
+    this._syncInterval = setInterval(() => this._periodicSync(), 30_000);
+
     console.log(`Foundry Paint | Bitmap ${this.gridW}×${this.gridH} (pixel size: ${this.pixelSize})`);
   }
 
@@ -541,6 +545,29 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
   }
 
   // ── Persistence ──────────────────────────────────────────────────
+
+  /** GM broadcasts current canvas to all players every 30s to correct drift. */
+  _periodicSync() {
+    if (!canvas.scene || !this._ready || !game.user.isGM) return;
+    const dataUrl = this._bitmap.toDataURL("image/png");
+    game.socket.emit("module.foundry-paint", {
+      action: "syncBitmap",
+      sceneId: canvas.scene.id,
+      bitmap: dataUrl,
+    });
+  }
+
+  /** Apply a bitmap data URL directly to the canvas (used by periodic GM sync). */
+  _applyBitmap(dataUrl) {
+    if (!dataUrl || !this._ready) return;
+    const img = new Image();
+    img.onload = () => {
+      this._ctx.clearRect(0, 0, this.gridW, this.gridH);
+      this._ctx.drawImage(img, 0, 0);
+      this._refreshTexture();
+    };
+    img.src = dataUrl;
+  }
 
   async _saveToScene() {
     const scene = canvas.scene;

@@ -76,12 +76,20 @@ Hooks.once("ready", () => {
 
   // Socket relay: players can't write scene flags directly, so they ask a GM to do it.
   game.socket.on("module.foundry-paint", async (data) => {
-    if (!game.user.isGM) return;
-    if (data.action !== "saveBitmap" || data.sceneId !== canvas.scene?.id) return;
-    await canvas.scene.update({
-      "flags.foundry-paint.bitmap": data.bitmap,
-      "flags.foundry-paint.pixelSize": data.pixelSize,
-    });
+    if (data.sceneId !== canvas.scene?.id) return;
+
+    if (data.action === "saveBitmap" && game.user.isGM) {
+      // Player → GM: write bitmap to scene flags so all clients sync via updateScene hook
+      await canvas.scene.update({
+        "flags.foundry-paint.bitmap": data.bitmap,
+        "flags.foundry-paint.pixelSize": data.pixelSize,
+      });
+    } else if (data.action === "syncBitmap" && !game.user.isGM) {
+      // GM → players: periodic correction, only apply if not mid-stroke
+      if (!canvas.paint?._isPainting) {
+        canvas.paint?._applyBitmap(data.bitmap);
+      }
+    }
   });
 });
 
