@@ -19,6 +19,10 @@ This restores the SSH symlink lost on container restart. Without it, `git push` 
 ## Commit & Push
 
 - **Commit whenever something is working.**
+- **Tag every version bump** — after bumping `module.json` version and pushing, always run:
+  ```
+  git tag vX.Y.Z && git push origin vX.Y.Z
+  ```
 
 ## TODO: Improve Release Process
 
