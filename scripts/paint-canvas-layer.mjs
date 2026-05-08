@@ -547,9 +547,23 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
     if (!scene) return;
 
     const dataUrl = this._bitmap.toDataURL("image/png");
+    const pixelSize = this.pixelSize;
 
-    await scene.setFlag("foundry-paint", "bitmap", dataUrl);
-    await scene.setFlag("foundry-paint", "pixelSize", this.pixelSize);
+    if (game.user.isGM) {
+      // GM can write directly — combine into one update to avoid two updateScene events
+      await scene.update({
+        "flags.foundry-paint.bitmap": dataUrl,
+        "flags.foundry-paint.pixelSize": pixelSize,
+      });
+    } else {
+      // Players relay through a GM client via the module socket
+      game.socket.emit("module.foundry-paint", {
+        action: "saveBitmap",
+        sceneId: scene.id,
+        bitmap: dataUrl,
+        pixelSize,
+      });
+    }
     console.log("Foundry Paint | Saved to scene flags");
   }
 

@@ -73,6 +73,16 @@ Hooks.once("init", () => {
 Hooks.once("ready", () => {
   console.log("Foundry Paint | Module ready");
   installTextToolPatch();
+
+  // Socket relay: players can't write scene flags directly, so they ask a GM to do it.
+  game.socket.on("module.foundry-paint", async (data) => {
+    if (!game.user.isGM) return;
+    if (data.action !== "saveBitmap" || data.sceneId !== canvas.scene?.id) return;
+    await canvas.scene.update({
+      "flags.foundry-paint.bitmap": data.bitmap,
+      "flags.foundry-paint.pixelSize": data.pixelSize,
+    });
+  });
 });
 
 // Register scene controls (also registers the canvas layer)
