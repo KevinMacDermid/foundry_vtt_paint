@@ -2,7 +2,7 @@
   "id": "foundry-paint",
   "title": "Foundry Paint",
   "description": "A barebones MSPaint-style bitmap painting tool for Foundry VTT.",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "authors": [
     {
       "name": "Pi Developer"
