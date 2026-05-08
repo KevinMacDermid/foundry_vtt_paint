@@ -586,6 +586,7 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
     this._ready = false;
     const img = new Image();
     img.onload = () => {
+      this._ctx.clearRect(0, 0, this.gridW, this.gridH);
       this._ctx.drawImage(img, 0, 0);
       this._ready = true;
       this._refreshTexture();
