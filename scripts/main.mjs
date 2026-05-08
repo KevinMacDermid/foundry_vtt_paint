@@ -85,7 +85,7 @@ Hooks.on("getSceneControlButtons", (controls) => {
 Hooks.on("updateScene", (scene, delta) => {
   if ( scene.id !== canvas.scene?.id ) return;
   if ( !foundry.utils.hasProperty(delta, "flags.foundry-paint") ) return;
-  paintLayer?._loadFromScene();
+  canvas.paint?._loadFromScene();
 });
 
 Hooks.on("canvasReady", () => {
