@@ -48,3 +48,35 @@ Hold off on this until the module feels ready to share with the community. After
 - **Source SSH before pushing**: `source /home/pi/workspace/.profile.d/ssh.sh` — must be run each session or `git push` will fail with host key verification errors.
 - **Run the smoke test before committing.** `node test/smoke.mjs` — server must be running and Gamemaster must not be logged in. If the test fails at sign-in, it may be because a human user is already logged in as Gamemaster at the same time; ask them to log out and retry.
 - **Git identity** is pre-configured (`Foundry Paint Dev / dev@foundry-paint.local`).
+
+## Lessons from Vibe-Coding at Scale
+
+*(Adapted from https://blog.k10s.dev/im-going-back-to-writing-code-by-hand/ — a developer who built a 1690-line god-object TUI tool over 7 months of AI-assisted coding before having to scrap it.)*
+
+**Meta-takeaways:**
+- "Like em-dash is to AI writing, god-object is to AI coding"
+- Vibe-coding makes everything feel cheap — you may lose focus and build bloat
+- Let the human write the architecture; don't just keep asking for features
+
+### 1. AI builds features, not architecture
+AI delivers each feature in isolation without awareness of how it interacts with everything else. Before adding a significant feature to this module, think through: which hooks does it use? Does it need new settings? Does it touch `PaintCanvasLayer` or can it live in its own file? Write that design down first, then prompt.
+
+### 2. The god object is the default AI artifact
+AI gravitates toward adding more fields and branches to whatever struct/class already exists. Watch `PaintCanvasLayer` — it already owns bitmap state, PIXI rendering, tool input, line tool, persistence, and sync. If it keeps growing, split responsibilities into separate classes or modules (e.g. a dedicated `PaintSync` class for the socket/scene flag logic).
+
+### 3. Velocity illusion widens scope
+AI makes features feel cheap to implement. That's an illusion — each feature adds real complexity. This module is a **bitmap MS Paint layer for Foundry VTT**, not a full drawing suite. It is explicitly NOT:
+- A replacement for Foundry's vector drawing tools
+- A token/tile annotation system
+- A fog-of-war replacement
+If a feature request doesn't serve "I want to paint freehand bitmap markings on a scene", push back.
+
+### 4. Avoid magic numbers and positional data
+AI tends to flatten structured data into arrays or use magic index numbers (e.g. `row[3]` meaning "Alloc column"). In this codebase: use named constants for sizes, colours, and tool names. Don't pass raw arrays where a named object would be clearer.
+
+### 5. AI doesn't own state transitions
+AI takes shortcuts with state mutations — it will mutate shared state from async callbacks, event handlers, and hooks without thinking about ordering or race conditions. In this module, state transitions that matter:
+- `_isPainting` should only be set/cleared in `_onDragLeftStart`, `_onDragLeftDrop`, `_onDragLeftCancel`, and the safety-net pointerup handler
+- `_ready` should only be set false by `_loadFromScene` and set true when the image loads
+- Scene flag writes should only happen through `_saveToScene` — never directly from event handlers
+If a new feature needs to mutate these, do it through the existing methods, not inline.
