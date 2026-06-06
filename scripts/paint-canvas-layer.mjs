@@ -93,6 +93,21 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
     this.gridH = 0;
   }
 
+  /** @override */
+  async _tearDown(options) {
+    // Foundry's base _tearDown destroys all children (sprite, cursor, etc.).
+    // Null our references now so initBitmap() starts fully clean on the next scene.
+    await super._tearDown(options);
+    this._sprite = null;
+    this._baseTexture = null;
+    this._eraserCursor = null;
+    this._lastStagePos = null;
+    if (this._syncInterval) {
+      clearInterval(this._syncInterval);
+      this._syncInterval = null;
+    }
+  }
+
   /**
    * Initialize the bitmap and sprite for the current scene.
    * Called from canvasReady hook.
@@ -149,10 +164,10 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
   }
 
   _buildSprite() {
-    if (this._sprite) {
+    if (this._sprite && !this._sprite.destroyed) {
       this._sprite.destroy({ children: true });
-      this._sprite = null;
     }
+    this._sprite = null;
 
     this._refreshTexture();
 
