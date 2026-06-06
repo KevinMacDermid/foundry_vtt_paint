@@ -15,6 +15,9 @@ export class PaintControls {
       layer: PaintCanvasLayer.LAYER_NAME,
       icon: "fa-solid fa-palette",
       order: 100,
+      onChange: (event, active) => {
+        if (active) canvas.paint?.activate();
+      },
       tools: {
         "paint-draw": {
           name: "paint-draw",

@@ -77,12 +77,12 @@ async function run() {
     const layer = canvas.paint;
     const originalSceneId = canvas.scene.id;
 
-    // Create a temporary second scene and switch to it
-    const tempScene = await Scene.create({ name: "__paint_test_temp__", width: 1000, height: 1000 });
-    await tempScene.view();
+    // Switch to Test2 scene then back — uses real pre-existing scenes in the test world
+    const test2 = game.scenes.getName("Test2");
+    if (!test2) return { error: "Test2 scene not found - please create it in the test world" };
+    await test2.view();
     await new Promise(r => setTimeout(r, 3000));
 
-    // Switch back to the original scene
     const originalScene = game.scenes.get(originalSceneId);
     await originalScene.view();
     await new Promise(r => setTimeout(r, 3000));
@@ -110,7 +110,7 @@ async function run() {
 
     freshLayer._onStageMove({ getLocalPosition: () => ({ x: 600, y: 600 }) });
 
-    const result = {
+    return {
       sameObject,
       cursorNulledByTeardown: cursorAfterSwitch === null,
       spriteExistsAfterSwitch: !!spriteAfterSwitch && !spriteAfterSwitch?.destroyed,
@@ -121,11 +121,6 @@ async function run() {
       cursorExistsAfterMove: !!freshLayer._eraserCursor && !freshLayer._eraserCursor.destroyed,
       cursorGeometryEmpty: freshLayer._eraserCursor?.geometry?.graphicsData?.length === 0,
     };
-
-    // Clean up temp scene
-    await tempScene.delete();
-
-    return result;
   });
 
   assert(afterSwitch.sameObject, "canvas.paint is same object after scene switch (no new instance)");
