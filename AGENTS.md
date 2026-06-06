@@ -47,6 +47,7 @@ No `gh` CLI available in the container — can be done via GitHub Actions OR man
 Hold off on this until the module feels ready to share with the community. After any feature, fix, or meaningful change is verified (smoke test passes or manually confirmed), commit immediately with a clear message. Don't batch unrelated changes.
 - **Source SSH before pushing**: `source /home/pi/workspace/.profile.d/ssh.sh` — must be run each session or `git push` will fail with host key verification errors.
 - **Run the smoke test before committing.** `node test/smoke.mjs` — server must be running and Gamemaster must not be logged in. If the test fails at sign-in, it may be because a human user is already logged in as Gamemaster at the same time; ask them to log out and retry.
+- **All tests are integration tests** — `smoke.mjs`, `multiplayer.mjs`, and `regression.mjs` all require a live Foundry server with the `test1` world active and `foundry-paint` enabled. They are NOT unit tests and cannot run in isolation. There is no mocking. Do not assume they can be run in CI without a full Foundry setup.
 - **Git identity** is pre-configured (`Foundry Paint Dev / dev@foundry-paint.local`).
 
 ## Lessons from Vibe-Coding at Scale

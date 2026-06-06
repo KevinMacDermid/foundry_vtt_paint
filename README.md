@@ -33,6 +33,23 @@ and configuration.
 3. Adjust **brush size** (1–3 pixels) in the flyout panel that appears next to the draw/line tools
 4. Adjust **eraser size** in the flyout panel that appears next to the erase tool
 
+## Testing
+
+The test suite (`test/smoke.mjs`, `test/multiplayer.mjs`, `test/regression.mjs`) consists of **integration tests** that run against a live Foundry instance. They are **not** unit tests and cannot be run in isolation.
+
+Each test requires:
+- A Foundry VTT server running locally on port 30000
+- The `test1` world active and fully loaded
+- The `foundry-paint` module enabled in that world
+- The Gamemaster user **not** already logged in (the tests log in as GM themselves)
+
+Run with:
+```
+node test/smoke.mjs
+node test/multiplayer.mjs
+node test/regression.mjs
+```
+
 ## Compatibility
 
 - Foundry VTT **v13** (Build 351+)
