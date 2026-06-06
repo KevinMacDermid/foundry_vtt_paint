@@ -133,6 +133,12 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
 
   /** Rebuild after settings change. */
   rebuild() {
+    // Destroy the cursor so it's recreated AFTER the sprite in initBitmap,
+    // otherwise the re-added sprite sits on top and hides it.
+    if (this._eraserCursor && !this._eraserCursor.destroyed) {
+      this._eraserCursor.destroy();
+    }
+    this._eraserCursor = null;
     this._sprite = null;
     this._bitmap = null;
     this._ctx = null;
@@ -222,7 +228,8 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
     document.body.classList.toggle("foundry-paint-draw", this.isDrawing);
     document.body.classList.toggle("foundry-paint-erase", this.isErasing);
     document.body.classList.toggle("foundry-paint-line", this.isLine);
-    if (!this.isErasing) this._eraserCursor?.clear();
+    if (this.isErasing) this._updateEraserCursor();
+    else this._eraserCursor?.clear();
     // Cancel any in-progress line chain if we switched away from the line tool
     if (!this.isLine) this._cancelLineChain();
   }
@@ -242,6 +249,7 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
   _onStageMove(event) {
     if (!this.isErasing) return;
     const pos = event.getLocalPosition(canvas.stage);
+    this._lastStagePos = pos;
     this._drawEraserCursor(pos.x, pos.y);
   }
 
@@ -278,10 +286,13 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
     g.drawRect(rx + 1, ry + 1, rw - 2, rh - 2);
   }
 
-  /** Force a cursor redraw at the last known mouse position (e.g. after size change). */
+  /** Force a cursor redraw at the last known mouse position (e.g. after tool switch or size change). */
   _updateEraserCursor() {
-    // Redrawn on next pointermove — just clear for now
-    this._eraserCursor?.clear();
+    if (this._lastStagePos) {
+      this._drawEraserCursor(this._lastStagePos.x, this._lastStagePos.y);
+    } else {
+      this._eraserCursor?.clear();
+    }
   }
 
   // ── Mouse event handlers ─────────────────────────────────────────
