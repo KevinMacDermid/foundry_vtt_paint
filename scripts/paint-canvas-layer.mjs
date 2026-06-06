@@ -84,13 +84,11 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
 
   /** @override */
   async _draw(options) {
-    // Called by Foundry each time the canvas (re)draws this layer.
-    // We reset sprite state here so initBitmap() always starts clean.
-    this._sprite = null;
-    this._bitmap = null;
-    this._ctx = null;
-    this.gridW = 0;
-    this.gridH = 0;
+    // super._draw sets hitArea = canvas.dimensions.rect and zIndex correctly.
+    await super._draw(options);
+    // Initialize the bitmap here (not in canvasReady) so the sprite exists
+    // before Foundry calls #initializeCanvasLayer() and activates this layer.
+    this.initBitmap();
   }
 
   /** @override */

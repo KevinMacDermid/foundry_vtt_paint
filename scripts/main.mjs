@@ -106,9 +106,9 @@ Hooks.on("updateScene", (scene, delta) => {
   canvas.paint?._loadFromScene();
 });
 
-Hooks.on("canvasReady", () => {
-  canvas.paint?.initBitmap();
-});
+// initBitmap() is now called from PaintCanvasLayer._draw(), which runs before
+// Foundry's #initializeCanvasLayer() activates the layer — so the sprite always
+// exists by the time _activate() is called.
 
 // Update cursor, colour button, and flyout panels when control/tool changes
 Hooks.on("renderSceneControls", () => {
