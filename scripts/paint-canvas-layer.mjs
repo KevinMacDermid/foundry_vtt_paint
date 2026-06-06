@@ -169,6 +169,7 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
       const texture = new PIXI.Texture(this._baseTexture);
       if (!this._sprite) {
         this._sprite = new PIXI.Sprite(texture);
+        this._sprite.eventMode = "none"; // sprite must never absorb pointer events
         this.addChild(this._sprite);
       } else {
         this._sprite.texture = texture;
@@ -199,8 +200,9 @@ export class PaintCanvasLayer extends foundry.canvas.layers.InteractionLayer {
   /** @override */
   _activate() {
     super._activate();
-    this.interactive = true;
-    this.interactiveChildren = true;
+    // Note: Foundry's activate() already sets eventMode="static" and interactiveChildren=true
+    // before calling _activate(). Don't set this.interactive here — it's a deprecated PIXI alias
+    // that can leave stale flags and prevent events from reaching other layers after deactivation.
     this._updateCursor();
     canvas.stage.on("pointermove", this._onStageMoveHandler);
     window.addEventListener("pointerup", this._onPointerUpHandler);
